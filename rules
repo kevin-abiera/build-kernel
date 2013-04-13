@@ -1,0 +1,57 @@
+#!/usr/bin/make -f
+#
+# Kernel Build Script
+#
+# Use this however you want, just give credit where credit is due.
+#
+# Copyright (c) 2013 Kevin Abiera <lightning18@live.com>
+#
+
+export ARCH=arm
+export SUBARCH=arm
+export BUILDTOOL_PATH=android
+export BUILD_CFG=$(shell cat $(BUILDTOOL_PATH)/config/last)
+export PKGTEMP_PATH=/run/shm/pkg
+export TOOLCHAIN=$(shell cat $(BUILDTOOL_PATH)/config/toolchain)
+export OUTPUTZIPNAME=kernel
+export SIGN_PEM=$(shell cat $(BUILDTOOL_PATH)/config/sign_pem)
+export SIGN_PK8=$(shell cat $(BUILDTOOL_PATH)/config/sign_pk8)
+
+PREFIX_CCACHE=$(shell cat $(BUILDTOOL_PATH)/config/ccache)
+CROSS_COMPILE=$(TOOLCHAIN)
+ifeq ($(PREFIX_CCACHE),1)
+	CROSS_COMPILE='ccache $(TOOLCHAIN)'
+endif
+
+czmake=$(MAKE) CROSS_COMPILE=$(CROSS_COMPILE)
+
+test:
+	@echo $(CROSS_COMPILE)
+
+toolchain:
+	$(BUILDTOOL_PATH)/scripts/pick-toolchain
+
+ccache-%:
+	echo $* > $(BUILDTOOL_PATH)/config/ccache
+
+# build:	build-$(shell cat $(BUILDTOOL_PATH)/config/last)
+build:
+	$(czmake) -j$(shell cat $(BUILDTOOL_PATH)/config/concurrency)
+
+cfg-%:
+	$(czmake) $*_defconfig
+	@echo $* > $(BUILDTOOL_PATH)/config/last
+	export BUILD_CFG=$*
+
+build-%: cfg-%
+	@echo Building: $*;				\
+	$(czmake) -j$(shell cat $(BUILDTOOL_PATH)/config/concurrency)
+
+package:
+	$(BUILDTOOL_PATH)/scripts/package
+
+menuconfig:
+	$(czmake) menuconfig
+
+clean:
+	$(czmake) clean

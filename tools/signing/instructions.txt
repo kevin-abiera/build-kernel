@@ -1,0 +1,1 @@
+java -Xmx1024m -jar signapk.jar -w testkey.x509.pem testkey.pk8 FILE.zip FILE-signed.zip

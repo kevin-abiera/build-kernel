@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# We have to be in the top level kernel source directory
+if [ ! -f MAINTAINERS ] || [ ! -f Makefile ]; then
+	echo "This does not appear to be the kernel source directory." 1>&2
+	exit 1
+fi
+
+num=0
+echo "Pick toolchain:"
+cat $BUILDTOOL_PATH/config/toolchain.list | \
+	while read a; do
+		let num++
+		#num=`expr $num + 1`
+		echo '    ['$num] $a
+		$a'gcc' -v 2>&1 | tail -1 | awk '{sub(/^/, "         ")};1'
+	done
+read choice
+awk 'NR=='$choice'{print;exit}' $BUILDTOOL_PATH/config/toolchain.list \
+	> $BUILDTOOL_PATH/config/toolchain

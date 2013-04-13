@@ -1,0 +1,59 @@
+#!/bin/bash
+#
+# Packaging Script
+#
+# Use this however you want, just give credit where credit is due.
+#
+# Copyright (c) 2013 Kevin Abiera <lightning18@live.com>
+#
+
+# We have to be in the top level kernel source directory
+if [ ! -f MAINTAINERS ] || [ ! -f Makefile ]; then
+	echo "This does not appear to be the kernel source directory." 1>&2
+	exit 1
+fi
+
+if [ ! -f arch/arm/boot/zImage ]; then
+	echo "There is no zImage. Run build-<defconfig> first." 1>&2
+	exit 2
+fi
+
+echo Packaging...
+
+# clear temp files
+rm -rf $PKGTEMP_PATH
+rm -rf $RAMFS_TMP.zip
+
+# copy to temp
+cp -ax $BUILDTOOL_PATH/package $PKGTEMP_PATH
+
+find $PKGTEMP_PATH -name .git -exec rm -rf {} \;
+
+cp arch/arm/boot/zImage $PKGTEMP_PATH/kernel/zImage
+
+mkdir -p $PKGTEMP_PATH/system/lib/modules
+
+mv -f drivers/media/video/samsung/mali_r3p0_lsi/mali.ko drivers/media/video/samsung/mali_r3p0_lsi/mali_r3p0_lsi.ko
+mv -f drivers/net/wireless/bcmdhd.cm/dhd.ko drivers/net/wireless/bcmdhd.cm/dhd_cm.ko
+
+find -name '*.ko' -exec cp -av {} $PKGTEMP_PATH/system/lib/modules/ \;
+$TOOLCHAIN'strip' --strip-unneeded $PKGTEMP_PATH/system/lib/modules/*
+
+old=$PWD
+out=$PWD/$BUILDTOOL_PATH/out
+mkdir -p $out
+
+cd $PKGTEMP_PATH
+#TODO: edit updatescript for packaging time
+zip -r kernel .
+
+cp kernel.zip $out/$OUTPUTZIPNAME.zip
+
+echo Signing...
+cd $old
+java -Xmx1024m -jar $BUILDTOOL_PATH/tools/signing/signapk.jar -w $SIGN_PEM $SIGN_PK8 $out/$OUTPUTZIPNAME.zip $out/$OUTPUTZIPNAME-signed.zip
+rm $out/$OUTPUTZIPNAME.zip
+
+echo Done.
+echo '  '
+echo OUTPUT = $BUILDTOOL_PATH/out/$OUTPUTZIPNAME-signed.zip
