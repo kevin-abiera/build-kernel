@@ -10,6 +10,7 @@
 export ARCH=arm
 export SUBARCH=arm
 export BUILDTOOL_PATH=android
+export BUILDTOOL_FILE=rules
 export BUILD_CFG=$(shell cat $(BUILDTOOL_PATH)/config/last)
 export PKGTEMP_PATH=/run/shm/pkg
 export TOOLCHAIN=$(shell cat $(BUILDTOOL_PATH)/config/toolchain)
@@ -34,18 +35,24 @@ toolchain:
 ccache-%:
 	echo $* > $(BUILDTOOL_PATH)/config/ccache
 
-# build:	build-$(shell cat $(BUILDTOOL_PATH)/config/last)
-build:
-	$(czmake) -j$(shell cat $(BUILDTOOL_PATH)/config/concurrency)
+.PHONY : build-% cfg-% build
+
+build-%: | cfg-%
+	$(BUILDTOOL_PATH)/$(BUILDTOOL_FILE) build
+	@echo Done
 
 cfg-%:
-	$(czmake) $*_defconfig
-	@echo $* > $(BUILDTOOL_PATH)/config/last
+	@echo Defconfig: $*;						\
+	$(czmake) $*_defconfig;							\
+	echo $* > $(BUILDTOOL_PATH)/config/last;				\
 	export BUILD_CFG=$*
 
-build-%: cfg-%
-	@echo Building: $*;				\
+build:
+	@echo Building: $(shell cat $(BUILDTOOL_PATH)/config/last);	\
+	sleep 2;								\
 	$(czmake) -j$(shell cat $(BUILDTOOL_PATH)/config/concurrency)
+
+build-last:	build-$(shell cat $(BUILDTOOL_PATH)/config/last)
 
 package:
 	$(BUILDTOOL_PATH)/scripts/package
