@@ -1,2 +1,4 @@
-../toolchain/android-toolchain-eabi/bin/arm-linux-androideabi-
+../toolchain/android-toolchain-eabi-4.7-2013.03/bin/arm-linux-androideabi-
+../toolchain/android-toolchain-eabi-4.8-2013.04/bin/arm-linux-androideabi-
 ../toolchain/gcc-linaro-arm-linux-gnueabihf-4.7-2013.03-20130313_linux/bin/arm-linux-gnueabihf-
+../toolchain/gcc-linaro-arm-linux-gnueabihf-4.8-2013.04-20130417_linux/bin/arm-linux-gnueabihf-
